@@ -9,6 +9,12 @@ namespace M_SAVA_BLL.Services.Interfaces
 {
     public interface ISaveFileService
     {
-        Task<Guid> CreateFileFromStreamAsync(FileToSaveDTO dto, CancellationToken cancellationToken = default);
+        Task<Guid> CreateFileFromStreamAsync(SaveFileFromStreamDTO dto, CancellationToken cancellationToken = default);
+        Task<Guid> CreateFileFromURLAsync(
+            SaveFileFromUrlDTO dto,
+            CancellationToken cancellationToken = default);
+        Task<Guid> CreateFileFromFormFileAsync(
+            SaveFileFromFormFileDTO dto,
+            CancellationToken cancellationToken = default);
     }
 }

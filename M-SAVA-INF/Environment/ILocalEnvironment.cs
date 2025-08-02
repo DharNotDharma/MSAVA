@@ -1,11 +1,12 @@
-﻿using System;
+﻿using M_SAVA_INF.Models;
+using System;
 using System.Collections.Generic;
 
 namespace M_SAVA_INF.Environment
 {
     public interface ILocalEnvironment
     {
-        string GetValue(string key);
+        LocalEnvironmentValues Values { get; }
         byte[] GetSigningKeyBytes();
     }
 }

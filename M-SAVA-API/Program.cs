@@ -20,10 +20,16 @@ using Serilog;
 using Serilog.Events;
 using M_SAVA_BLL.Loggers;
 
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+// Register local environment
+builder.Services.AddSingleton<ILocalEnvironment, LocalEnvironment>();
+var env = LocalEnvironment.Instance;
+
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
     .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Information)
-    .MinimumLevel.Information()
+    .MinimumLevel.Is(env.Values.SerilogInformationLevel)
     .Enrich.FromLogContext()
     .Enrich.WithEnvironmentName()
     .Enrich.WithMachineName()
@@ -31,17 +37,18 @@ Log.Logger = new LoggerConfiguration()
     .Enrich.WithProcessId()
     .WriteTo.Async(a => a.File(
         path: "Logs/serilog-.txt",
-        rollingInterval: RollingInterval.Day,
-        retainedFileCountLimit: null,
-        fileSizeLimitBytes: 10 * 1024 * 1024,
-        rollOnFileSizeLimit: true,
+        rollingInterval: env.Values.SerilogRollingInterval,
+        retainedFileCountLimit: env.Values.SerilogRetainedFileCountLimit,
+        fileSizeLimitBytes: env.Values.SerilogFileSizeLimitBytes,
+        rollOnFileSizeLimit: env.Values.SerilogRollOnFileSizeLimit,
         outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}"
     ))
     .CreateLogger();
-
-WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-
 builder.Host.UseSerilog();
+
+// Write a log reporting Serilog configuration
+Log.Information("Serilog configured with Information level: {InformationLevel}, Rolling Interval: {RollingInterval}, Retained File Count Limit: {RetainedFileCountLimit}, File Size Limit Bytes: {FileSizeLimitBytes}, Roll On File Size Limit: {RollOnFileSizeLimit}",
+    env.Values.SerilogInformationLevel, env.Values.SerilogRollingInterval, env.Values.SerilogRetainedFileCountLimit, env.Values.SerilogFileSizeLimitBytes, env.Values.SerilogRollOnFileSizeLimit);
 
 // Register controllers
 builder.Services.AddControllers(options =>
@@ -91,17 +98,14 @@ builder.Services.AddSwaggerGen(c =>
     c.OperationFilter<AuthorizeCheckOperationFilter>();
 });
 
-// Register local environment
-builder.Services.AddSingleton<ILocalEnvironment, LocalEnvironment>();
-var env = LocalEnvironment.Instance;
-
 // Register main database context
-string baseDbConnectionString = $"Host={env.GetValue("postgres_basedb_host")};Port={env.GetValue("postgres_basedb_port")};Database={env.GetValue("postgres_basedb_dbname")};Username={env.GetValue("postgres_basedb_user")};Password={env.GetValue("postgres_basedb_password")};Ssl Mode={env.GetValue("postgres_basedb_ssl_mode")}";
+string baseDbConnectionString = $"Host={env.Values.PostgresBaseDbHost};Port={env.Values.PostgresBaseDbPort};Database={env.Values.PostgresBaseDbDbName};Username={env.Values.PostgresBaseDbUser};Password={env.Values.PostgresBaseDbPassword};Ssl Mode={env.Values.PostgresBaseDbSslMode}";
 builder.Services.AddDbContext<BaseDataContext>(options =>
     options.UseNpgsql(baseDbConnectionString));
 
-// Register IHttpContextAccessor
+// Register HTTP services
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpClient();
 
 // Register services
 builder.Services.AddScoped<IUserService, UserService>();
@@ -144,9 +148,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
-            ValidIssuer = env.GetValue("jwt_issuer_name"),
+            ValidIssuer = env.Values.JwtIssuerName,
             ValidateAudience = true,
-            ValidAudience = env.GetValue("jwt_issuer_audience"),
+            ValidAudience = env.Values.JwtIssuerAudience,
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero, 
             ValidateIssuerSigningKey = true,
@@ -198,7 +202,7 @@ app.UseStaticFiles(new StaticFileOptions
         {
             var metaJson = System.IO.File.ReadAllText(metaPath);
             var metaDoc = JsonDocument.Parse(metaJson);
-            bool anyPublic = false;
+            bool anyPublic= false;
             if (metaDoc.RootElement.ValueKind == JsonValueKind.Array)
             {
                 foreach (var element in metaDoc.RootElement.EnumerateArray())

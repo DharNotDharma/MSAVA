@@ -37,8 +37,8 @@ namespace M_SAVA_BLL.Services
         {
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
             _jwtRepository = jwtRepository ?? throw new ArgumentNullException(nameof(jwtRepository));
-            _jwtIssuer = env.GetValue("jwt_issuer_name");
-            _jwtAudience = env.GetValue("jwt_issuer_audience");
+            _jwtIssuer = env.Values.JwtIssuerName;
+            _jwtAudience = env.Values.JwtIssuerAudience;
             _jwtKeyBytes = env.GetSigningKeyBytes();
             _inviteCodeService = inviteCodeService ?? throw new ArgumentNullException(nameof(inviteCodeService));
             _serviceLogger = serviceLogger ?? throw new ArgumentNullException(nameof(serviceLogger));

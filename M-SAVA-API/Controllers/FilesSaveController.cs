@@ -28,7 +28,7 @@ namespace M_SAVA_API.Controllers
 
         [HttpPost("stream")]
         [Consumes("application/octet-stream")]
-        public async Task<ActionResult<Guid>> CreateFile(
+        public async Task<ActionResult<Guid>> CreateFileFromStream(
             [FromQuery] [Required] string fileName,
             [FromQuery] [Required] string fileExtension,
             [FromQuery] [Required] List<string> tags,
@@ -39,7 +39,7 @@ namespace M_SAVA_API.Controllers
             [FromQuery] [Required] bool publicDownload,
             CancellationToken cancellationToken = default)
         {
-            FileToSaveDTO dto = new FileToSaveDTO
+            SaveFileFromStreamDTO dto = new SaveFileFromStreamDTO
             {
                 FileName = fileName,
                 FileExtension = fileExtension,
@@ -53,6 +53,25 @@ namespace M_SAVA_API.Controllers
             };
 
             Guid id = await _saveFileService.CreateFileFromStreamAsync(dto, cancellationToken);
+            return Ok(id);
+        }
+
+        [HttpPost("url")]
+        public async Task<ActionResult<Guid>> CreateFileFromUrl(
+            [FromForm][Required] SaveFileFromUrlDTO dto,
+            CancellationToken cancellationToken = default)
+        {
+            var id = await _saveFileService.CreateFileFromURLAsync(dto, cancellationToken);
+            return Ok(id);
+        }
+
+        [HttpPost("formfile")]
+        [Consumes("multipart/form-data")]
+        public async Task<ActionResult<Guid>> CreateFileFromFormFile(
+            [FromForm][Required] SaveFileFromFormFileDTO dto,
+            CancellationToken cancellationToken = default)
+        {
+            var id = await _saveFileService.CreateFileFromFormFileAsync(dto, cancellationToken);
             return Ok(id);
         }
     }

@@ -40,8 +40,8 @@ namespace M_SAVA_BLL.Services
 
         private Guid SeedAdminUser()
         {
-            string adminUsername = _env.GetValue("admin_username");
-            string adminPassword = _env.GetValue("admin_password");
+            string adminUsername = _env.Values.AdminUsername;
+            string adminPassword = _env.Values.AdminPassword;
 
             UserDB? adminUser = _userRepo.GetAllAsReadOnly().FirstOrDefault(u => u.Username == adminUsername);
             if (adminUser == null)

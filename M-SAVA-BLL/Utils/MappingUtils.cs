@@ -79,7 +79,7 @@ namespace M_SAVA_BLL.Utils
         }
 
         public static SavedFileReferenceDB MapSavedFileReferenceDB(
-            FileToSaveDTO dto,
+            SaveFileFromStreamDTO dto,
             byte[] fileHash,
             ulong fileLength)
         {
@@ -136,7 +136,7 @@ namespace M_SAVA_BLL.Utils
         }
 
         public static SavedFileDataDB MapSavedFileDataDB(
-            FileToSaveDTO dto,
+            SaveFileFromStreamDTO dto,
             SavedFileReferenceDB savedFileDb,
             ulong sizeInBytes,
             Guid owner,
