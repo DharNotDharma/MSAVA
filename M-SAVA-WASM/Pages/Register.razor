@@ -1,0 +1,24 @@
+@page "/register"
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<h3>Register</h3>
+<EditForm Model="registerModel" OnValidSubmit="RegisterUser">
+    <InputText @bind-Value="registerModel.Email" placeholder="Email" />
+    <InputText @bind-Value="registerModel.Password" placeholder="Password" type="password" />
+    <button type="submit">Register</button>
+</EditForm>
+@if (!string.IsNullOrEmpty(error)) { <div>@error</div> }
+
+@code {
+    RegisterModel registerModel = new();
+    string error;
+
+    async Task RegisterUser()
+    {
+        var resp = await Http.PostAsJsonAsync("api/account/register", registerModel); // adjust endpoint if needed
+        if (resp.IsSuccessStatusCode) Nav.NavigateTo("/login");
+        else error = "Registration failed";
+    }
+    class RegisterModel { public string Email { get; set; } public string Password { get; set; } }
+}

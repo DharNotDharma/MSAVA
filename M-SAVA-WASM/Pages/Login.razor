@@ -1,0 +1,45 @@
+@page "/login"
+@inject HttpClient Http
+@inject IJSRuntime JS
+
+<h3>Login</h3>
+<EditForm Model="loginModel" OnValidSubmit="LoginUser">
+    <InputText @bind-Value="loginModel.Email" placeholder="Email" />
+    <InputText @bind-Value="loginModel.Password" placeholder="Password" type="password" />
+    <button type="submit">Login</button>
+</EditForm>
+@if (!string.IsNullOrEmpty(error)) { <div>@error</div> }
+
+@if (claims?.Any() == true) {
+    <h4>Your Claims:</h4>
+    <ul>@foreach(var c in claims) { <li>@c.Type: @c.Value</li> }</ul>
+}
+
+@code {
+    LoginModel loginModel = new();
+    string error;
+    List<System.Security.Claims.Claim> claims = new();
+
+    async Task LoginUser()
+    {
+        var resp = await Http.PostAsJsonAsync("api/account/login", loginModel); // adjust endpoint if needed
+        if (resp.IsSuccessStatusCode)
+        {
+            var jwt = await resp.Content.ReadAsStringAsync();
+            await JS.InvokeVoidAsync("localStorage.setItem", "jwt_token", jwt);
+            claims = ParseClaimsFromJwt(jwt);
+        }
+        else error = "Login failed";
+    }
+
+    List<System.Security.Claims.Claim> ParseClaimsFromJwt(string jwt)
+    {
+        var payload = jwt.Split('.')[1];
+        var jsonBytes = System.Convert.FromBase64String(PadBase64(payload));
+        var keyValuePairs = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(jsonBytes);
+        return keyValuePairs.Select(kvp => new System.Security.Claims.Claim(kvp.Key, kvp.Value.ToString())).ToList();
+    }
+    string PadBase64(string b) => b.PadRight(b.Length + (4 - b.Length % 4) % 4, '=');
+
+    class LoginModel { public string Email { get; set; } public string Password { get; set; } }
+}
