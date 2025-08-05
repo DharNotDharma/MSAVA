@@ -4,11 +4,15 @@
 
 <h3>Register</h3>
 <EditForm Model="registerModel" OnValidSubmit="RegisterUser">
-    <InputText @bind-Value="registerModel.Email" placeholder="Email" />
+    <InputText @bind-Value="registerModel.Username" placeholder="Username" />
     <InputText @bind-Value="registerModel.Password" placeholder="Password" type="password" />
+    <InputText @bind-Value="registerModel.InviteCode" placeholder="Invite Code" />
     <button type="submit">Register</button>
 </EditForm>
-@if (!string.IsNullOrEmpty(error)) { <div>@error</div> }
+@if (!string.IsNullOrEmpty(error))
+{
+    <div style="color:red">@error</div>
+}
 
 @code {
     RegisterModel registerModel = new();
@@ -16,9 +20,28 @@
 
     async Task RegisterUser()
     {
-        var resp = await Http.PostAsJsonAsync("api/account/register", registerModel); // adjust endpoint if needed
-        if (resp.IsSuccessStatusCode) Nav.NavigateTo("/login");
-        else error = "Registration failed";
+        // Map property names to match API (all lowercase)
+        var body = new
+        {
+            username = registerModel.Username,
+            password = registerModel.Password,
+            inviteCode = registerModel.InviteCode
+        };
+
+        var resp = await Http.PostAsJsonAsync("api/auth/register", body);
+        if (resp.IsSuccessStatusCode)
+            Nav.NavigateTo("/login");
+        else
+        {
+            var content = await resp.Content.ReadAsStringAsync();
+            error = $"Registration failed: {resp.StatusCode} - {content}";
+        }
     }
-    class RegisterModel { public string Email { get; set; } public string Password { get; set; } }
+
+    class RegisterModel
+    {
+        public string Username { get; set; }
+        public string Password { get; set; }
+        public string InviteCode { get; set; }
+    }
 }

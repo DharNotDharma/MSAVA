@@ -158,7 +158,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// // Added CORS policy hopefully to allow Blazor WASM to access the API
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowBlazorDev", policy =>
+        policy.WithOrigins("https://localhost:7102") // <<- your Blazor WASM URL!
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
+
 WebApplication app = builder.Build();
+
+
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
@@ -181,6 +193,9 @@ app.UseSerilogRequestLogging(options =>
 });
 
 app.UseRouting();
+
+
+app.UseCors("AllowBlazorDev"); // <-- ADD THIS LINE
 
 app.UseStaticFiles(new StaticFileOptions
 {

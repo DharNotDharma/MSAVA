@@ -4,7 +4,7 @@
 
 <h3>Login</h3>
 <EditForm Model="loginModel" OnValidSubmit="LoginUser">
-    <InputText @bind-Value="loginModel.Email" placeholder="Email" />
+    <InputText @bind-Value="loginModel.Username" placeholder="Username" />
     <InputText @bind-Value="loginModel.Password" placeholder="Password" type="password" />
     <button type="submit">Login</button>
 </EditForm>
@@ -22,7 +22,7 @@
 
     async Task LoginUser()
     {
-        var resp = await Http.PostAsJsonAsync("api/account/login", loginModel); // adjust endpoint if needed
+        var resp = await Http.PostAsJsonAsync("api/auth/login", loginModel); // adjust endpoint if needed
         if (resp.IsSuccessStatusCode)
         {
             var jwt = await resp.Content.ReadAsStringAsync();
@@ -41,5 +41,5 @@
     }
     string PadBase64(string b) => b.PadRight(b.Length + (4 - b.Length % 4) % 4, '=');
 
-    class LoginModel { public string Email { get; set; } public string Password { get; set; } }
+    class LoginModel { public string Username { get; set; } public string Password { get; set; } }
 }
